@@ -1,6 +1,11 @@
 package com.example.facebookposts;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.net.MalformedURLException;
+
 import com.facebook.android.AsyncFacebookRunner;
+import com.facebook.android.AsyncFacebookRunner.RequestListener;
 import com.facebook.android.DialogError;
 import com.facebook.android.Facebook;
 import com.facebook.android.Facebook.DialogListener;
@@ -15,6 +20,7 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 
 public class MainActivity extends Activity {
 
@@ -27,6 +33,7 @@ public class MainActivity extends Activity {
 	String FILENAME = "AndroidSSO_data";
 	private SharedPreferences mPrefs;
 	
+	TextView nameTextView;
 	Button loginButton;
 
 	@Override
@@ -37,7 +44,7 @@ public class MainActivity extends Activity {
 		facebook = new Facebook(APP_ID);
 		mAsyncRunner = new AsyncFacebookRunner(facebook);
 		
-		
+		nameTextView = (TextView) findViewById(R.id.textView_name);
 		loginButton = (Button) findViewById(R.id.button_login);
 		loginButton.setOnClickListener( new OnClickListener() {
 
@@ -59,7 +66,7 @@ public class MainActivity extends Activity {
 	@SuppressWarnings("deprecation")
 	private void login() {
 		Log.i(TAG, "LOGIN");
-		
+		loginButton.setText(R.string.logout);
 	    mPrefs = getPreferences(MODE_PRIVATE);
 	    String access_token = mPrefs.getString("access_token", null);
 	    long expires = mPrefs.getLong("access_expires", 0);
@@ -92,10 +99,18 @@ public class MainActivity extends Activity {
 	                        editor.putLong("access_expires",
 	                                facebook.getAccessExpires());
 	                        editor.commit();
-	                        
+	                        getGraphData();
+	                		loginButton.setOnClickListener( new OnClickListener() {
+
+	                			@Override
+	                			public void onClick(View v) {
+	                				logout();
+	                			}
+	                			
+	                		});
 	                    }
-	 
-	                    @Override
+
+						@Override
 	                    public void onError(DialogError error) {
 	                        // Function to handle error
 	 
@@ -109,6 +124,54 @@ public class MainActivity extends Activity {
 	 
 	                });
 	    }
+
+	}
+	
+	@SuppressWarnings("deprecation")
+	public void logout() {
+		loginButton.setText(R.string.login);
+	    mAsyncRunner.logout(this, new RequestListener() {
+	        @Override
+	        public void onComplete(String response, Object state) {
+	            Log.d(TAG, "Logout from Facebook" + response);
+	            if (Boolean.parseBoolean(response) == true) {
+	                // User successfully Logged out
+	            }
+	    		loginButton.setOnClickListener( new OnClickListener() {
+
+	    			@Override
+	    			public void onClick(View v) {
+	    				login();
+	    			}
+	    			
+	    		});
+	        }
+	 
+	        @Override
+	        public void onIOException(IOException e, Object state) {
+	        }
+	 
+	        @Override
+	        public void onFileNotFoundException(FileNotFoundException e,
+	                Object state) {
+	        }
+	 
+	        @Override
+	        public void onMalformedURLException(MalformedURLException e,
+	                Object state) {
+	        }
+	 
+	        @Override
+	        public void onFacebookError(FacebookError e, Object state) {
+	        }
+	    });
+	    
+
+	}
+	
+    private void getGraphData() {
+		// TODO Auto-generated method stub
+		
 	}
 
 }
